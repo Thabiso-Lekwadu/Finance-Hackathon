@@ -4,7 +4,7 @@ https://docs.kedro.org/en/stable/configure/configuration_basics/#configuration""
 
 # Instantiated project hooks.
 # For example, after creating a hooks.py and defining a ProjectHooks class there, do
-# from stdbank_hack.hooks import ProjectHooks
+# from stdbank_pip.hooks import ProjectHooks
 # Hooks are executed in a Last-In-First-Out (LIFO) order.
 # HOOKS = (ProjectHooks(),)
 

@@ -1,5 +1,5 @@
-"""stdbank-hack file for ensuring the package is executable
-as `stdbank-hack` and `python -m stdbank_hack`
+"""stdbank-pip file for ensuring the package is executable
+as `stdbank-pip` and `python -m stdbank_pip`
 """
 import sys
 from pathlib import Path
