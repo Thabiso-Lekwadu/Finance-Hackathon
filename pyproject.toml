@@ -1,0 +1,10 @@
+[project]
+name = "finance-hackathon"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "graphdatascience>=1.22",
+    "ipykernel>=7.3.0",
+]
