@@ -14,6 +14,7 @@ import numpy as np
 import pandas as pd
 import matplotlib
 import matplotlib.pyplot as plt
+import matplotlib.ticker
 import streamlit as st
 
 matplotlib.use('Agg')
@@ -149,14 +150,25 @@ def style_axes(ax, ylabel='', xlabel=''):
 
 
 @st.cache_resource
+def _read_model(path, mtime):
+    return joblib.load(path)
+
+
 def load_model():
-    return joblib.load(os.path.join(ARTIFACTS, 'fraud_model.joblib'))
+    path = os.path.join(ARTIFACTS, 'fraud_model.joblib')
+    return _read_model(path, os.path.getmtime(path))
 
 
 @st.cache_data
-def load_json(name):
-    with open(os.path.join(ARTIFACTS, name)) as fh:
+def _read_json(path, mtime):
+    """mtime is part of the cache key, so replacing a file reloads it."""
+    with open(path) as fh:
         return json.load(fh)
+
+
+def load_json(name):
+    path = os.path.join(ARTIFACTS, name)
+    return _read_json(path, os.path.getmtime(path))
 
 
 if ARTIFACTS is None:
@@ -280,6 +292,26 @@ LOW_ACTIVITY = meta.get('low_activity_positions',
                         eda.get('low_activity_positions', []))
 
 
+
+def money_input(label, default, key, help_text=None):
+    """A plain text box for a rand amount.
+
+    st.number_input pushes people towards the plus and minus buttons, so we use a
+    text box and parse it. Spaces, commas and a leading R are all accepted.
+    """
+    raw = st.text_input(label, value=f'{default:,.0f}', key=key, help=help_text)
+    cleaned = raw.replace(' ', '').replace(',', '').replace('R', '').strip()
+    try:
+        value = float(cleaned)
+        if value < 0:
+            st.caption('Amount cannot be negative, using 0.')
+            return 0.0
+        return value
+    except ValueError:
+        st.caption(f'Could not read "{raw}" as a number, using {default:,.0f}.')
+        return float(default)
+
+
 def build_row(txn_type, amount, old_org, old_dest, cycle_position):
     """Turn raw transaction inputs into the model feature vector."""
     row = {
@@ -346,7 +378,7 @@ def page_overview():
         <div class='l'>Fraud caught</div></div>
       <div class='stat sand'><div class='k'>{meta['pr_auc']:.3f}</div>
         <div class='l'>PR-AUC</div></div>
-      <div class='stat sage'><div class='k'>R{(cost['baseline_no_model']-co['total_cost'])/1000:,.0f}k</div>
+      <div class='stat sage'><div class='k' style='font-size:1.5rem;'>R{cost['baseline_no_model']-co['total_cost']:,.0f}</div>
         <div class='l'>Loss avoided</div></div>
     </div>""", unsafe_allow_html=True)
 
@@ -386,8 +418,9 @@ fraud. Every number on the performance page is built to avoid that illusion.
 def page_eda():
     st.markdown("<div class='eyebrow'>Deliverable one</div>", unsafe_allow_html=True)
     st.markdown('# Explore the data')
-    st.markdown("<p class='lede'>Four questions: how rare is fraud, where does it hide, "
-                "when does it happen, and how large is it.</p>", unsafe_allow_html=True)
+    st.markdown("<p class='lede'>Four simple questions about the data: how often does fraud "
+                "happen, what kind of transactions does it hide in, when does it happen, and "
+                "how much money is involved.</p>", unsafe_allow_html=True)
     st.markdown("<div class='rule'></div>", unsafe_allow_html=True)
 
     st.markdown(f"""
@@ -416,18 +449,20 @@ def page_eda():
         show['rate'] = (show['rate'] * 100).round(3).astype(str) + '%'
         show.columns = ['Type', 'Transactions', 'Fraud', 'Fraud rate']
         st.dataframe(show, hide_index=True, use_container_width=True)
-        st.markdown("<div class='note'>TRANSFER and CASH_OUT carry every single fraud case. "
-                    "A first line of defence could ignore the other three types entirely and "
-                    "lose nothing.</div>", unsafe_allow_html=True)
+        st.markdown("<div class='note'>Every single fraud in this data is either a transfer "
+                    "or a cash withdrawal. Payments, deposits and debit orders have never once "
+                    "been fraudulent here. That means the bank could safely ignore those three "
+                    "types and still catch everything, which saves a lot of checking.</div>",
+                    unsafe_allow_html=True)
 
     # ---------------------------------------------------------- by hour
     st.markdown('## Where fraud sits in the activity cycle')
-    st.markdown("<div class='note'>A note on what we can and cannot claim. The data card "
-                "tells us one step is one hour and the simulation runs for 30 days. It does "
-                "<b>not</b> tell us which clock time step 1 corresponds to, so we do not label "
-                "these positions with real hours. We only use what the data supports: a "
-                "repeating 24 step cycle, and the fact that some positions carry far less "
-                "traffic than others.</div>", unsafe_allow_html=True)
+    st.markdown("<div class='note'><b>A quick note on time.</b> We know each step in the data "
+                "is one hour, and that the whole period covers 30 days. What we are never told "
+                "is what time of day the very first hour was. So we cannot honestly say "
+                "something happened at 3am. What we can say is that activity follows the same "
+                "24 hour rhythm every day, and that some hours in that rhythm are much quieter "
+                "than others. That is all we use.</div>", unsafe_allow_html=True)
 
     cycle = pd.DataFrame(eda['cycle'])
     fig, ax = plt.subplots(figsize=(11, 3.4))
@@ -448,18 +483,21 @@ def page_eda():
                  fontsize=10, color=INK, loc='left', pad=12)
     st.pyplot(fig, use_container_width=True)
 
-    st.markdown(f"<div class='note'>Genuine volume collapses in part of the cycle while the "
-                f"<i>count</i> of frauds barely moves, so the fraud <i>share</i> climbs sharply "
-                f"there. Quiet positions {LOW_ACTIVITY} carry a "
-                f"{eda['activity_split']['low_rate']*100:.2f} percent fraud rate against "
-                f"{eda['activity_split']['busy_rate']*100:.2f} percent elsewhere, while holding "
-                f"only {eda['activity_split']['low_volume_share']*100:.1f} percent of all "
-                f"traffic. Those positions were picked by volume alone, not by assuming a clock "
-                f"time, which is why both cycle position and a low activity flag are model "
-                f"inputs.</div>", unsafe_allow_html=True)
+    st.markdown(f"<div class='note'><b>What this chart is saying.</b> Real customers go quiet "
+                f"for part of every day, but criminals do not. The number of frauds stays "
+                f"roughly the same hour after hour, while normal activity drops away almost "
+                f"completely. So during the quiet hours, fraud makes up a much bigger slice of "
+                f"whatever is happening. In numbers: during the quiet stretch about "
+                f"{eda['activity_split']['low_rate']*100:.1f} in every 100 transactions are "
+                f"fraud, against roughly "
+                f"{eda['activity_split']['busy_rate']*100:.2f} in 100 the rest of the time. "
+                f"That quiet stretch is only "
+                f"{eda['activity_split']['low_volume_share']*100:.1f} percent of all "
+                f"transactions, so it is a small window worth watching closely.</div>",
+                unsafe_allow_html=True)
 
     # ---------------------------------------------------------- amounts
-    st.markdown('## How large fraud is')
+    st.markdown('## How much money is involved')
     c1, c2 = st.columns(2)
     with c1:
         hist = eda['amount_hist']
@@ -498,16 +536,19 @@ def page_eda():
         <div class='l'>Mean fraud</div></div>
     </div>""", unsafe_allow_html=True)
 
-    st.markdown('## The three findings that shaped the model')
+    st.markdown('## The three things we learned')
     st.markdown("""
-1. **Type is the strongest filter.** Fraud lives only in TRANSFER and CASH_OUT, so transaction
-   type is encoded directly as a model input.
-2. **Position in the cycle carries real signal.** The fraud rate in the quiet part of the
-   cycle is many times higher than in the busy part, so cycle position and a low activity
-   flag both go in. We deliberately avoid calling these positions clock hours, because the
-   data never tells us when the simulation started.
-3. **Size matters but is skewed.** Fraudulent amounts are far larger, but the raw column is so
-   skewed that we use the logarithm instead, which the models handle far better.
+1. **The type of transaction matters most.** Fraud only ever shows up in transfers and cash
+   withdrawals, so we tell the model what type each transaction is.
+
+2. **Timing matters.** Fraud is far more common during the quiet hours, so we tell the model
+   where in the daily rhythm each transaction falls. We are careful not to call these real
+   clock times, because the data never tells us when the clock started.
+
+3. **Size matters, but needs adjusting first.** Fraud involves much bigger amounts. A handful
+   of enormous transactions would otherwise drown out everything else, so we shrink the scale
+   of the amount before the model sees it. This is a standard trick and it changes nothing
+   about the ordering, just the spread.
 """)
 
 
@@ -672,17 +713,27 @@ def page_predict():
         if cycle_position in LOW_ACTIVITY:
             st.caption('This is one of the low activity positions.')
     with c2:
-        amount = st.number_input('Amount, rand', min_value=0.0, value=float(d_amt), step=1000.0)
-        old_org = st.number_input('Sender balance before', min_value=0.0,
-                                  value=float(d_org), step=1000.0)
+        amount = money_input('Amount, rand', d_amt, key='amt')
+        old_org = money_input('Sender balance before', d_org, key='org')
     with c3:
-        old_dest = st.number_input('Receiver balance before', min_value=0.0,
-                                   value=float(d_dest), step=1000.0)
+        old_dest = money_input('Receiver balance before', d_dest, key='dest')
         threshold = st.slider(
             'Decision threshold', min_value=0.01, max_value=0.99,
             value=float(np.clip(meta['thresholds']['cost_optimal']['threshold'],
                                 0.01, 0.99)),
-            step=0.01, format='%.2f')
+            step=0.01, format='%.2f',
+            help='The cut off for flagging a transaction. Lower catches more fraud '
+                 'but bothers more genuine customers. Higher does the opposite.')
+
+    st.markdown("<div class='note'><b>What the decision threshold does.</b> The model gives "
+                "every transaction a score between 0 and 1 showing how suspicious it looks. "
+                "The threshold is simply the cut off line. Anything scoring above it gets "
+                "flagged for a human to check, anything below passes straight through. "
+                "Drag it down and you catch more fraud but interrupt more honest customers. "
+                "Drag it up and you interrupt fewer people but let more fraud slip by. "
+                "There is no single correct setting, which is why the Recommendations page "
+                "works out where it should sit based on what each mistake costs the bank."
+                "</div>", unsafe_allow_html=True)
 
     row = build_row(txn_type, amount, old_org, old_dest, cycle_position)
     proba = float(model.predict_proba(row)[0, 1])
@@ -797,72 +848,98 @@ def page_recommend():
 
     c1, c2 = st.columns(2)
     with c1:
-        cost_fn = st.number_input('Cost of one missed fraud, rand', min_value=100.0,
-                                  value=float(meta['costs']['missed_fraud']), step=500.0)
+        cost_fn = money_input('Cost of one missed fraud, rand',
+                              meta['costs']['missed_fraud'], key='cfn')
     with c2:
-        cost_fp = st.number_input('Cost of reviewing one false alarm, rand', min_value=1.0,
-                                  value=float(meta['costs']['false_alarm']), step=10.0)
+        cost_fp = money_input('Cost of reviewing one false alarm, rand',
+                              meta['costs']['false_alarm'], key='cfp')
 
     ratio = cost_fn / max(cost_fp, 1e-9)
     n_fraud = meta['test_fraud_count']
     n_rows = meta['test_rows']
 
-    if not meta['has_pr_curve']:
-        st.markdown("<div class='note'>This metadata file does not include the full precision "
-                    "recall curve, so the cost curve below is drawn from the two stored "
-                    "operating points. Regenerate with train_and_save.py for the full "
-                    "version.</div>", unsafe_allow_html=True)
     _f1t, _cot = meta['thresholds']['f1_optimal'], meta['thresholds']['cost_optimal']
-    pr = meta.get('pr_curve', {'recall': [_cot['recall'], _f1t['recall']],
-                               'precision': [_cot['precision'], _f1t['precision']]})
-    recalls = np.array(pr['recall'])
-    precisions = np.array(pr['precision'])
-    with np.errstate(divide='ignore', invalid='ignore'):
-        tp = recalls * n_fraud
-        alerts = np.where(precisions > 0, tp / precisions, 0)
-        fp = np.clip(alerts - tp, 0, None)
-        fn = n_fraud - tp
-        total = fn * cost_fn + fp * cost_fp
-    ok = np.isfinite(total) & (alerts > 0)
-    best = int(np.argmin(np.where(ok, total, np.inf)))
 
-    fig, ax = plt.subplots(figsize=(10, 3.6))
-    ax.plot(recalls[ok], total[ok] / 1000, color=INK, linewidth=1.8)
-    ax.scatter([recalls[best]], [total[best] / 1000], s=110, color=CLAY, zorder=5,
-               edgecolor=INK, linewidth=0.8)
-
-    # Keep the y-axis scaled to the cost curve itself. The "doing nothing"
-    # baseline can be an order of magnitude higher than anything on the curve
-    # (especially with only two fallback points), and letting it into the
-    # autoscale squashes the real data into a sliver at the bottom of an
-    # otherwise empty chart. So only draw it as a line if it actually falls
-    # in range; otherwise call out its value in the corner instead.
-    data_max = float(np.nanmax(total[ok])) / 1000 if ok.any() else 0.0
-    ylim_top = max(data_max * 1.25, data_max + 20, 1.0)
-    baseline = n_fraud * cost_fn / 1000
-    if baseline <= ylim_top:
-        ax.axhline(baseline, color=MUTED, linestyle=':', linewidth=1.3)
-        ax.text(0.02, baseline, ' doing nothing', fontsize=8.5,
-                color=MUTED, va='bottom')
+    if not meta['has_pr_curve']:
+        # Two stored points cannot make a meaningful curve, so show the numbers instead
+        rows = []
+        for label, entry in [('Do nothing', None), ('Best F1 balance', _f1t),
+                             ('Lowest business cost', _cot)]:
+            if entry is None:
+                rows.append({'Strategy': label, 'Fraud caught': '0%', 'Alerts': 0,
+                             'Total cost': f'R{n_fraud * cost_fn:,.0f}'})
+            else:
+                tp = entry['recall'] * n_fraud
+                fp = max(entry['alerts'] - tp, 0)
+                rows.append({'Strategy': label,
+                             'Fraud caught': f"{entry['recall']*100:.0f}%",
+                             'Alerts': f"{entry['alerts']:,}",
+                             'Total cost': f'R{(n_fraud - tp) * cost_fn + fp * cost_fp:,.0f}'})
+        st.dataframe(pd.DataFrame(rows), hide_index=True, use_container_width=True)
+        st.markdown("<div class='note'>The full cost curve needs the stored precision recall "
+                    "curve, which this metadata file does not carry. Regenerate the artifacts "
+                    "with train_and_save.py to see it. The comparison above uses the two "
+                    "stored operating points and is unaffected.</div>", unsafe_allow_html=True)
+        best_recall = _cot['recall']
+        best_alerts = _cot['alerts']
+        best_total = ((n_fraud - _cot['recall'] * n_fraud) * cost_fn
+                      + max(_cot['alerts'] - _cot['recall'] * n_fraud, 0) * cost_fp)
     else:
-        ax.text(0.02, ylim_top, f' doing nothing costs R{baseline:,.0f}k, off this scale',
-                fontsize=8.5, color=MUTED, va='top')
-    ax.set_ylim(0, ylim_top)
+        pr = meta['pr_curve']
+        recalls = np.array(pr['recall'])
+        precisions = np.array(pr['precision'])
 
-    style_axes(ax, 'Total cost, thousands of rand', 'Share of fraud caught')
-    ax.set_title('Total cost against how much fraud we chase',
-                 fontsize=10, color=INK, loc='left', pad=12)
-    st.pyplot(fig, use_container_width=True)
+        with np.errstate(divide='ignore', invalid='ignore'):
+            tp = recalls * n_fraud
+            alerts = np.where(precisions > 0, tp / precisions, 0)
+            fp = np.clip(alerts - tp, 0, None)
+            fn = n_fraud - tp
+            total = fn * cost_fn + fp * cost_fp
+        ok = np.isfinite(total) & (alerts > 0)
+        best = int(np.argmin(np.where(ok, total, np.inf)))
+
+        fig, ax = plt.subplots(figsize=(10, 3.6))
+        ax.plot(recalls[ok], total[ok], color=INK, linewidth=1.8, label='total cost')
+        ax.scatter([recalls[best]], [total[best]], s=110, color=CLAY, zorder=5,
+                   edgecolor=INK, linewidth=0.8, label='cheapest point')
+        ax.axhline(n_fraud * cost_fn, color=MUTED, linestyle=':', linewidth=1.3,
+                   label='doing nothing')
+        # The curve rockets upward at the far right, which flattens everything else.
+        # Cap the view so the useful part of the chart stays readable.
+        ax.set_ylim(0, min(np.nanmax(total[ok]), n_fraud * cost_fn * 1.6))
+        ax.yaxis.set_major_formatter(
+            matplotlib.ticker.FuncFormatter(lambda v, _: f'R{v:,.0f}'))
+        style_axes(ax, 'Total cost to the bank', 'Share of fraud caught')
+        ax.legend(frameon=False, fontsize=8.5, labelcolor=MUTED, loc='upper right')
+        ax.set_title('Total cost against how much fraud we chase',
+                     fontsize=10, color=INK, loc='left', pad=12)
+        st.pyplot(fig, use_container_width=True)
+
+        st.markdown(
+            "<div class='note'><b>How to read this chart.</b> Every point on the black line "
+            "is a different setting for how aggressive the fraud system is. Moving to the "
+            "right means chasing more fraud. The height of the line is what that setting "
+            "costs the bank in total, adding up two things: money lost on fraud that got "
+            "through, and staff time spent checking alerts that turn out to be innocent. "
+            "The dotted line is what it costs to do nothing at all. The orange dot marks the "
+            "cheapest setting, which is the one we recommend. Notice the line shoots up at "
+            "the far right: chasing the last few percent of fraud means flagging a huge "
+            "number of ordinary customers, and the review bill grows faster than the fraud "
+            "it prevents.</div>", unsafe_allow_html=True)
+
+        best_recall = float(recalls[best])
+        best_alerts = int(alerts[best])
+        best_total = float(total[best])
 
     st.markdown(f"""
     <div class='statgrid'>
       <div class='stat'><div class='k'>{ratio:,.0f}x</div>
         <div class='l'>Missed fraud vs false alarm</div></div>
-      <div class='stat sage'><div class='k'>{recalls[best]*100:.0f}%</div>
+      <div class='stat sage'><div class='k'>{best_recall*100:.0f}%</div>
         <div class='l'>Recommended fraud caught</div></div>
-      <div class='stat sand'><div class='k'>{int(alerts[best]):,}</div>
+      <div class='stat sand'><div class='k'>{best_alerts:,}</div>
         <div class='l'>Alerts per {n_rows:,} txns</div></div>
-      <div class='stat sage'><div class='k'>R{(n_fraud*cost_fn - total[best])/1000:,.0f}k</div>
+      <div class='stat sage'><div class='k' style='font-size:1.5rem;'>R{n_fraud*cost_fn - best_total:,.0f}</div>
         <div class='l'>Saved against doing nothing</div></div>
     </div>""", unsafe_allow_html=True)
 
@@ -870,8 +947,8 @@ def page_recommend():
     <div class='note'>
     Because a missed fraud costs about {ratio:,.0f} times more than a wasted review, the bank
     should deliberately accept a <b>high false alarm rate</b>. Chasing
-    {recalls[best]*100:.0f} percent of fraud means analysts review roughly
-    {int(alerts[best]):,} transactions out of {n_rows:,}, and that work is worth it. Tuning for
+    {best_recall*100:.0f} percent of fraud means analysts review roughly
+    {best_alerts:,} transactions out of {n_rows:,}, and that work is worth it. Tuning for
     a tidy looking precision score would quietly cost more money.
     </div>""", unsafe_allow_html=True)
 
