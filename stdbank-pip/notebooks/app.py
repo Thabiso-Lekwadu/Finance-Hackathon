@@ -830,9 +830,25 @@ def page_recommend():
     ax.plot(recalls[ok], total[ok] / 1000, color=INK, linewidth=1.8)
     ax.scatter([recalls[best]], [total[best] / 1000], s=110, color=CLAY, zorder=5,
                edgecolor=INK, linewidth=0.8)
-    ax.axhline(n_fraud * cost_fn / 1000, color=MUTED, linestyle=':', linewidth=1.3)
-    ax.text(0.02, n_fraud * cost_fn / 1000, ' doing nothing', fontsize=8.5,
-            color=MUTED, va='bottom')
+
+    # Keep the y-axis scaled to the cost curve itself. The "doing nothing"
+    # baseline can be an order of magnitude higher than anything on the curve
+    # (especially with only two fallback points), and letting it into the
+    # autoscale squashes the real data into a sliver at the bottom of an
+    # otherwise empty chart. So only draw it as a line if it actually falls
+    # in range; otherwise call out its value in the corner instead.
+    data_max = float(np.nanmax(total[ok])) / 1000 if ok.any() else 0.0
+    ylim_top = max(data_max * 1.25, data_max + 20, 1.0)
+    baseline = n_fraud * cost_fn / 1000
+    if baseline <= ylim_top:
+        ax.axhline(baseline, color=MUTED, linestyle=':', linewidth=1.3)
+        ax.text(0.02, baseline, ' doing nothing', fontsize=8.5,
+                color=MUTED, va='bottom')
+    else:
+        ax.text(0.02, ylim_top, f' doing nothing costs R{baseline:,.0f}k, off this scale',
+                fontsize=8.5, color=MUTED, va='top')
+    ax.set_ylim(0, ylim_top)
+
     style_axes(ax, 'Total cost, thousands of rand', 'Share of fraud caught')
     ax.set_title('Total cost against how much fraud we chase',
                  fontsize=10, color=INK, loc='left', pad=12)
