@@ -1,15 +1,54 @@
 {
+  "model_type": "XGBClassifier",
   "features": [
     "log_amount",
     "cycle_position",
     "is_low_activity",
+    "type_CASH_OUT",
+    "type_DEBIT",
+    "type_PAYMENT",
+    "type_TRANSFER",
     "log_old_org",
-    "log_old_dest",
+    "log_old_dest"
+  ],
+  "type_columns": [
     "type_CASH_OUT",
     "type_DEBIT",
     "type_PAYMENT",
     "type_TRANSFER"
   ],
+  "pr_auc": 0.8324148506272323,
+  "roc_auc": 0.9988502980510653,
+  "thresholds": {
+    "f1_optimal": {
+      "threshold": 0.9838718175888062,
+      "precision": 0.8679245283018868,
+      "recall": 0.7215686274509804,
+      "f1": 0.7880085653104926
+    },
+    "cost_optimal": {
+      "threshold": 0.06635277591899824,
+      "precision": 0.14893617021276595,
+      "recall": 0.9607843137254902,
+      "f1": 0.2578947368421053
+    }
+  },
+  "costs": {
+    "missed_fraud": 5000.0,
+    "false_alarm": 50.0,
+    "baseline_no_model": 1275000.0
+  },
+  "importance": {
+    "log_amount": 0.05782477930188179,
+    "cycle_position": 0.028008803725242615,
+    "is_low_activity": 0.016716361045837402,
+    "type_CASH_OUT": 0.315499871969223,
+    "type_DEBIT": 0.024632487446069717,
+    "type_PAYMENT": 0.37072300910949707,
+    "type_TRANSFER": 0.07431310415267944,
+    "log_old_org": 0.08153606951236725,
+    "log_old_dest": 0.03074551932513714
+  },
   "low_activity_positions": [
     1,
     2,
@@ -20,60 +59,11 @@
     7,
     8
   ],
-  "type_columns": [
-    "type_CASH_OUT",
-    "type_DEBIT",
-    "type_PAYMENT",
-    "type_TRANSFER"
-  ],
-  "model_type": "XGBClassifier",
-  "trained_rows": 356306,
   "test_rows": 190879,
   "test_fraud_count": 255,
   "test_fraud_rate": 0.001335924852917293,
-  "pr_auc": 0.8324148506272323,
-  "roc_auc": 0.9988502980510653,
-  "thresholds": {
-    "f1_optimal": {
-      "threshold": 0.983872,
-      "precision": 0.8679,
-      "recall": 0.7216,
-      "f1": 0.788,
-      "true_positives": 184,
-      "false_positives": 28,
-      "false_negatives": 71,
-      "true_negatives": 190596,
-      "alerts": 212,
-      "total_cost": 356400.0
-    },
-    "cost_optimal": {
-      "threshold": 0.066353,
-      "precision": 0.1489,
-      "recall": 0.9608,
-      "f1": 0.2579,
-      "true_positives": 245,
-      "false_positives": 1400,
-      "false_negatives": 10,
-      "true_negatives": 189224,
-      "alerts": 1645,
-      "total_cost": 120000.0
-    }
-  },
-  "costs": {
-    "missed_fraud": 5000.0,
-    "false_alarm": 50.0,
-    "baseline_no_model": 1275000.0
-  },
-  "importance": {
-    "log_amount": 0.05782,
-    "cycle_position": 0.02801,
-    "is_low_activity": 0.01672,
-    "log_old_org": 0.08154,
-    "log_old_dest": 0.03075,
-    "type_CASH_OUT": 0.3155,
-    "type_DEBIT": 0.02463,
-    "type_PAYMENT": 0.37072,
-    "type_TRANSFER": 0.07431
+  "accuracy_trap": {
+    "always_normal_accuracy": 0.9986640751470827
   },
   "pr_curve": {
     "precision": [
@@ -681,34 +671,30 @@
       0.0
     ]
   },
-  "accuracy_trap": {
-    "always_normal_accuracy": 0.9986640751470827,
-    "model_accuracy": 0.9926131214015161
-  },
   "model_comparison": [
     {
       "model": "Logistic Regression (baseline)",
-      "basic": 0.055,
-      "balances": 0.091,
-      "errors": 0.466
+      "basic": 0.07671597089155459,
+      "balances": 0.1030406562210738,
+      "errors": 0.4764264203554059
     },
     {
       "model": "Decision Tree",
-      "basic": 0.236,
-      "balances": 0.198,
-      "errors": 0.272
+      "basic": 0.24052208185359897,
+      "balances": 0.19784946677315257,
+      "errors": 0.27174379223494816
     },
     {
       "model": "Random Forest",
-      "basic": 0.204,
-      "balances": 0.716,
-      "errors": 0.845
+      "basic": 0.178375080519963,
+      "balances": 0.7228264167813557,
+      "errors": 0.857378562747609
     },
     {
       "model": "XGBoost",
-      "basic": 0.283,
-      "balances": 0.836,
-      "errors": 0.99
+      "basic": 0.27844726250335344,
+      "balances": 0.8324148506272323,
+      "errors": 0.9891741859976433
     }
   ]
 }
