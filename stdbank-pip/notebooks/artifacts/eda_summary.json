@@ -1,0 +1,384 @@
+{
+  "total_rows": 636262,
+  "fraud_count": 849,
+  "fraud_rate": 0.0013343559728539501,
+  "normal_count": 635413,
+  "fraud_by_type": [
+    {
+      "type": "CASH_IN",
+      "transactions": 139684,
+      "fraud": 0,
+      "rate": 0.0
+    },
+    {
+      "type": "CASH_OUT",
+      "transactions": 223846,
+      "fraud": 417,
+      "rate": 0.0018628878782734558
+    },
+    {
+      "type": "DEBIT",
+      "transactions": 4147,
+      "fraud": 0,
+      "rate": 0.0
+    },
+    {
+      "type": "PAYMENT",
+      "transactions": 215315,
+      "fraud": 0,
+      "rate": 0.0
+    },
+    {
+      "type": "TRANSFER",
+      "transactions": 53270,
+      "fraud": 432,
+      "rate": 0.008109630185845693
+    }
+  ],
+  "cycle": [
+    {
+      "cycle_position": 0,
+      "transactions": 7197,
+      "fraud": 28,
+      "rate": 0.003890509934695012
+    },
+    {
+      "cycle_position": 1,
+      "transactions": 2639,
+      "fraud": 37,
+      "rate": 0.014020462296324365
+    },
+    {
+      "cycle_position": 2,
+      "transactions": 896,
+      "fraud": 38,
+      "rate": 0.04241071428571429
+    },
+    {
+      "cycle_position": 3,
+      "transactions": 180,
+      "fraud": 26,
+      "rate": 0.14444444444444443
+    },
+    {
+      "cycle_position": 4,
+      "transactions": 119,
+      "fraud": 26,
+      "rate": 0.2184873949579832
+    },
+    {
+      "cycle_position": 5,
+      "transactions": 154,
+      "fraud": 35,
+      "rate": 0.22727272727272727
+    },
+    {
+      "cycle_position": 6,
+      "transactions": 338,
+      "fraud": 38,
+      "rate": 0.11242603550295859
+    },
+    {
+      "cycle_position": 7,
+      "transactions": 927,
+      "fraud": 33,
+      "rate": 0.03559870550161812
+    },
+    {
+      "cycle_position": 8,
+      "transactions": 2610,
+      "fraud": 41,
+      "rate": 0.015708812260536397
+    },
+    {
+      "cycle_position": 9,
+      "transactions": 28371,
+      "fraud": 32,
+      "rate": 0.0011279123048183004
+    },
+    {
+      "cycle_position": 10,
+      "transactions": 42574,
+      "fraud": 39,
+      "rate": 0.0009160520505472824
+    },
+    {
+      "cycle_position": 11,
+      "transactions": 44724,
+      "fraud": 39,
+      "rate": 0.00087201502548967
+    },
+    {
+      "cycle_position": 12,
+      "transactions": 48490,
+      "fraud": 37,
+      "rate": 0.0007630439265828005
+    },
+    {
+      "cycle_position": 13,
+      "transactions": 46976,
+      "fraud": 37,
+      "rate": 0.0007876362397820164
+    },
+    {
+      "cycle_position": 14,
+      "transactions": 44015,
+      "fraud": 25,
+      "rate": 0.0005679881858457344
+    },
+    {
+      "cycle_position": 15,
+      "transactions": 41652,
+      "fraud": 42,
+      "rate": 0.0010083549409392106
+    },
+    {
+      "cycle_position": 16,
+      "transactions": 44498,
+      "fraud": 36,
+      "rate": 0.0008090251247247067
+    },
+    {
+      "cycle_position": 17,
+      "transactions": 43861,
+      "fraud": 43,
+      "rate": 0.000980369804610018
+    },
+    {
+      "cycle_position": 18,
+      "transactions": 57926,
+      "fraud": 36,
+      "rate": 0.0006214825812243206
+    },
+    {
+      "cycle_position": 19,
+      "transactions": 64659,
+      "fraud": 38,
+      "rate": 0.0005876985415796718
+    },
+    {
+      "cycle_position": 20,
+      "transactions": 55472,
+      "fraud": 33,
+      "rate": 0.0005948947216613788
+    },
+    {
+      "cycle_position": 21,
+      "transactions": 24695,
+      "fraud": 34,
+      "rate": 0.0013767969224539381
+    },
+    {
+      "cycle_position": 22,
+      "transactions": 19343,
+      "fraud": 42,
+      "rate": 0.002171328129038929
+    },
+    {
+      "cycle_position": 23,
+      "transactions": 13946,
+      "fraud": 34,
+      "rate": 0.0024379750466083463
+    }
+  ],
+  "amount_bands": [
+    {
+      "band": "0 to 1k",
+      "transactions": 14419,
+      "fraud": 7,
+      "rate": 0.0004854705596782024
+    },
+    {
+      "band": "1k to 10k",
+      "transactions": 113960,
+      "fraud": 22,
+      "rate": 0.00019305019305019305
+    },
+    {
+      "band": "10k to 50k",
+      "transactions": 152407,
+      "fraud": 85,
+      "rate": 0.0005577171652220699
+    },
+    {
+      "band": "50k to 100k",
+      "transactions": 72107,
+      "fraud": 67,
+      "rate": 0.0009291746987116369
+    },
+    {
+      "band": "100k to 500k",
+      "transactions": 249162,
+      "fraud": 275,
+      "rate": 0.0011036996010627624
+    },
+    {
+      "band": "500k to 1m",
+      "transactions": 21119,
+      "fraud": 122,
+      "rate": 0.005776788673706142
+    },
+    {
+      "band": "1m to 10m",
+      "transactions": 12830,
+      "fraud": 269,
+      "rate": 0.020966484801247076
+    },
+    {
+      "band": "over 10m",
+      "transactions": 256,
+      "fraud": 0,
+      "rate": 0.0
+    }
+  ],
+  "amount_hist": {
+    "edges": [
+      0.039,
+      0.491,
+      0.943,
+      1.395,
+      1.847,
+      2.299,
+      2.751,
+      3.203,
+      3.655,
+      4.107,
+      4.559,
+      5.011,
+      5.463,
+      5.915,
+      6.367,
+      6.818,
+      7.27,
+      7.722,
+      8.174,
+      8.626,
+      9.078,
+      9.53,
+      9.982,
+      10.434,
+      10.886,
+      11.338,
+      11.79,
+      12.242,
+      12.694,
+      13.146,
+      13.598,
+      14.05,
+      14.502,
+      14.954,
+      15.405,
+      15.857,
+      16.309,
+      16.761,
+      17.213,
+      17.665,
+      18.117
+    ],
+    "normal": [
+      9,
+      11,
+      20,
+      29,
+      55,
+      65,
+      131,
+      204,
+      300,
+      459,
+      774,
+      1242,
+      1907,
+      3118,
+      4855,
+      7554,
+      11819,
+      18090,
+      26935,
+      37964,
+      46254,
+      46448,
+      40594,
+      37534,
+      44682,
+      62231,
+      82885,
+      80156,
+      46732,
+      15539,
+      7648,
+      4842,
+      2283,
+      918,
+      412,
+      520,
+      99,
+      57,
+      30,
+      8
+    ],
+    "fraud": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      3,
+      0,
+      3,
+      1,
+      2,
+      2,
+      2,
+      8,
+      4,
+      16,
+      13,
+      28,
+      36,
+      46,
+      51,
+      74,
+      79,
+      92,
+      73,
+      78,
+      58,
+      60,
+      38,
+      30,
+      50,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "amount_stats": {
+    "normal_median": 74407.1,
+    "fraud_median": 429257.45,
+    "normal_mean": 178423.06265976618,
+    "fraud_mean": 1499440.8950176677
+  },
+  "low_activity_positions": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8
+  ],
+  "activity_split": {
+    "low_rate": 0.03484675060409513,
+    "busy_rate": 0.000915023734920011,
+    "low_volume_share": 0.01235811662491238
+  }
+}
